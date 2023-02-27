@@ -55,6 +55,7 @@ def query_limit():
     # slow the query speed to meet the 150 queries per minute limit
     time_since_last_query = time.time() - ALPHA_VANTAGE_QUERY_LAST_TIME
     if time_since_last_query < ALPHA_VANTAGE_QUERY_LIMIT:
+        print(f"waiting {ALPHA_VANTAGE_QUERY_LIMIT - time_since_last_query} seconds before next query")
         time.sleep(ALPHA_VANTAGE_QUERY_LIMIT - time_since_last_query)
 
 
