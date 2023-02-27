@@ -11,7 +11,7 @@ search_url = "https://api.twitter.com/2/tweets/search/recent"
 
 # Optional params: start_time,end_time,since_id,until_id,max_results,next_token,
 # expansions,tweet.fields,media.fields,poll.fields,place.fields,user.fields
-query_params = {'query': 'MSFT', 'max_results': '100'}
+query_params = {'query': 'MSFT', 'max_results': '10'}
 
 
 def bearer_oauth(r):

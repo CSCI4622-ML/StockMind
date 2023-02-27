@@ -2,3 +2,4 @@ AlphaIntelligence/*
 TechIndicators/*
 TimeSeries/*
 alpha_vantage_key.py
+*.pyc
