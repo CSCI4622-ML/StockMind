@@ -1,5 +1,6 @@
 AlphaIntelligence/*
 TechIndicators/*
 TimeSeries/*
+merged_data/*
 alpha_vantage_key.py
 *.pyc
