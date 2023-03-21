@@ -72,7 +72,7 @@ for sym in symbols:
     output_file = Path(output_dir) / f"{sym}.csv"
     ts = alpha_vantage.timeseries.TimeSeries(key=ALPHA_VANTAGE_KEY, output_format='pandas')
     query_limit()
-    data, meta_data = ts.get_daily_adjusted(symbol=sym, outputsize='compact')
+    data, meta_data = ts.get_daily_adjusted(symbol=sym, outputsize='full')
     output_query(data, output_file, replace_existing=True)
 
 #------------------TECH INDICATOR DATA-----------------------
