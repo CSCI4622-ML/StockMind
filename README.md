@@ -1,7 +1,8 @@
-# StockMind 
 
-Connor Davel, Peter McDevitt, Aidan Thiessen
+<p style="text-align: center;">StockMind</p>
 
+
+<p style="text-align: center;">Connor Davel, Peter McDevitt, Aidan Thiessen</p>
 
 Instructions:
 
