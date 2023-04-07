@@ -1,5 +1,3 @@
-
-
 <p align="center">
 StockMind 
 <br>  
@@ -17,4 +15,4 @@ Instructions:
 7) python setup.py # or just run however you do. Should take about 10 minutes or less to finish gathering the data
 8) cd ..
 9) python combine_TimeSeries_Techindicators.py
-10) Train with NN.ipynb
+10) Train with TimeSeriesTechIndicatorsPredictor.ipynb
