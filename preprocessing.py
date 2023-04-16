@@ -2,7 +2,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import os
 
-def scale_dataframe(df):
+def scale_dataframe(df, scaler):
     """
     Scale all columns in a pandas DataFrame  using MinMaxScaler.
 
@@ -12,12 +12,11 @@ def scale_dataframe(df):
     Returns:
         pandas.DataFrame: The scaled DataFrame.
     """
-    scaler = MinMaxScaler()
     columns_to_normalize = [col for col in df.columns]
     df[columns_to_normalize] = scaler.fit_transform(df[columns_to_normalize])
     return df
 
-def combine_csvs_from_folder(folder_path):
+def combine_csvs_from_folder(folder_path, scaler=MinMaxScaler()):
     """
     Combines all CSV files in a folder into a single pandas DataFrame also normalizes before combining them.
 
@@ -39,7 +38,7 @@ def combine_csvs_from_folder(folder_path):
         # Dont need the date column
         df = df.drop(['date'], axis=1)
         # normalize the dataframes before combining them
-        df = scale_dataframe(df)
+        df = scale_dataframe(df, scaler)
         # for the neural network to understand the company name we need to convert it to a number
         df['company'] = i
         i += 1
@@ -57,3 +56,8 @@ def add_up_column(df):
         if df.loc[i, '4. close'] > df.loc[i-1, '4. close']:
             df.loc[i, 'up'] = 1
     return df
+
+def add_lag_column(df, column_name, lag_amount):
+    # Create column that "lags" behind the current column with name <column_name>_lag<lag_amount>
+    # This is useful when you want to use previous days' values for a given row. 
+    df[f"{column_name}_lag{lag_amount}"] = df[column_name].shift(lag_amount)
