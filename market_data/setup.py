@@ -50,7 +50,7 @@ def output_query(data, file_location, replace_existing=False):
 
 # limit the speed of the querying if necessary
 ALPHA_VANTAGE_QUERY_LAST_TIME = time.time()
-ALPHA_VANTAGE_QUERY_LIMIT = 60 / 150 # seconds per query allowed
+ALPHA_VANTAGE_QUERY_LIMIT = 60 / 150 # seconds per query allowed 
 def query_limit():
     # slow the query speed to meet the 150 queries per minute limit
     time_since_last_query = time.time() - ALPHA_VANTAGE_QUERY_LAST_TIME
@@ -143,11 +143,53 @@ for sym in symbols:
     data.dropna(inplace=True)
     output_query(data, output_file, replace_existing=True)
 
+
 #------------------SENTIMENT ANALYSIS  DATA-----------------------
+
 output_dir = "AlphaIntelligence"
+symbols = ["AAPL"] # Limited to reduce testing time
+
 for sym in symbols:
     output_file = Path(output_dir) / f"{sym}.csv"
     ts = alpha_vantage.AlphaIntelligence(key=ALPHA_VANTAGE_KEY, output_format='pandas', indexing_type='integer')
-    query_limit()
-    data, meta_data = ts.get_news(symbol=sym, time_from="20211209T2022", time_to="20221209T2022", limit=200)
+    data, meta_data = None, None
+    print(sym)
+
+    for i in range(12):
+        # TODO: Fix date iteration
+        start_year, start_month = None, None
+        end_year, end_month = "2022", None
+        if (i == 0):
+            start_year = "2021"
+            start_month = "12"
+            end_month = "01"
+        else:
+            start_year = "2022"
+            start_month = "{:02d}".format(i)
+            end_month = "{:02d}".format(i+1)
+            
+        time_from = start_year + start_month + "09T0000"
+        time_to = end_year + end_month + "09T0000"
+
+        if (i == 0):
+            print("From:", time_from, "- To:", time_to)
+
+        num_articles = 30
+
+        query_limit()
+        try:
+            # TODO: change timestamps to time_from and time_to
+            cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from="20220209T2022", time_to="20230409T2022", limit=num_articles, sort="RELEVANCE")
+
+            cur_data['index'] = [ind + num_articles*i for ind in cur_data['index']]
+            cur_data.index = [ind + num_articles*i for ind in cur_data.index]
+
+            if (data is None):
+                data = cur_data
+                meta_data = cur_meta_data
+            else:
+                data = pd.concat([data, cur_data])
+        except:
+            print("No articles found")
+    
     output_query(data, output_file, replace_existing=True)
