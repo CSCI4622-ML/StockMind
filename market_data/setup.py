@@ -65,7 +65,7 @@ os.chdir(dname) # change location to setup file's directory
 
 # symbols that will be used when querying all data
 symbols = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'PCAR', 'TSLA', 'NVDA', 'V', 'TSM', 'UNH']
-
+"""
 #------------------TIME SERIES DATA-----------------------
 output_dir = "TimeSeries"
 for sym in symbols:
@@ -142,12 +142,17 @@ for sym in symbols:
         data = pd.concat([data, query], axis=1, join='outer')
     data.dropna(inplace=True)
     output_query(data, output_file, replace_existing=True)
-
+"""
 
 #------------------SENTIMENT ANALYSIS  DATA-----------------------
 
 output_dir = "AlphaIntelligence"
 symbols = ["AAPL"] # Limited to reduce testing time
+
+num_articles = 30
+num_months = 15
+starting_month = 2 # Feb
+day_of_month = "01"
 
 for sym in symbols:
     output_file = Path(output_dir) / f"{sym}.csv"
@@ -155,31 +160,21 @@ for sym in symbols:
     data, meta_data = None, None
     print(sym)
 
-    for i in range(12):
-        # TODO: Fix date iteration
-        start_year, start_month = None, None
-        end_year, end_month = "2022", None
-        if (i == 0):
-            start_year = "2021"
-            start_month = "12"
-            end_month = "01"
-        else:
-            start_year = "2022"
-            start_month = "{:02d}".format(i)
-            end_month = "{:02d}".format(i+1)
+    for i in range(num_months):
+        start_year = "{}".format(2022 + (i + starting_month - 1) // 12)
+        start_month = "{:02d}".format((i + starting_month - 1) % 12 + 1)
+
+        end_year = "{}".format(2022 + (i + starting_month) // 12)
+        end_month = "{:02d}".format((i  + starting_month) % 12 + 1)
             
-        time_from = start_year + start_month + "09T0000"
-        time_to = end_year + end_month + "09T0000"
+        time_from = start_year + start_month + day_of_month + "T0000"
+        time_to = end_year + end_month + day_of_month + "T0000"
 
-        if (i == 0):
-            print("From:", time_from, "- To:", time_to)
-
-        num_articles = 30
+        print(i, "=> From:", time_from, "- To:", time_to)
 
         query_limit()
         try:
-            # TODO: change timestamps to time_from and time_to
-            cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from="20220209T2022", time_to="20230409T2022", limit=num_articles, sort="RELEVANCE")
+            cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from=time_from, time_to=time_to, limit=num_articles, sort="RELEVANCE")
 
             cur_data['index'] = [ind + num_articles*i for ind in cur_data['index']]
             cur_data.index = [ind + num_articles*i for ind in cur_data.index]

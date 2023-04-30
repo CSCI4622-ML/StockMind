@@ -7,7 +7,6 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
-
 # NOTE: Uncomment this line the first time you run
 # nltk.download('vader_lexicon')
 # nltk.download('punkt')
@@ -48,7 +47,7 @@ def sentiment_analysis(url, symbol, name):
             body_sentences.append(sentence)
 
     if len(body_sentences) == 0:
-        return (None, None, None)
+        return None, None, None
 
     # Clean text
     body_text = " ".join(body_sentences)
@@ -87,13 +86,9 @@ def sentiment_analysis(url, symbol, name):
             sentiment_scores.append(sentiment)
             relevant_sentences += 1
 
-        #print(sentence)
-        #print("SENTIMENT:", sentiment)
-        #print("RELEVANCE:", relevance)
-        #print()
-
+    # Check for good results
     if len(sentiment_scores) == 0:
-        return (None, None, None)
+        return None, None, None
 
     relevance = relevant_sentences / len(body_sentences)
     relevance = np.log(relevance * 19 + 1) / np.log(10) # Apply log scaling
@@ -101,38 +96,49 @@ def sentiment_analysis(url, symbol, name):
     sentiment = np.mean(sentiment_scores)
     effective_sentiment = sentiment * relevance
 
-    return (sentiment, relevance, effective_sentiment)
+    return sentiment, relevance, effective_sentiment
 
-# Example
-# sentiment, relevance, effective_sentiment = sentiment_analysis("https://www.fool.com/investing/how-to-invest/stocks/how-to-invest-in-apple-stock/", "AAPL", "Apple")
-# print("Overall relevance:", relevance)
-# print("Overall sentiment:", sentiment)
-# print("Effective sentiment:", effective_sentiment)
+def analyze_csv(symbol, name, limit=0):
+    """
+    Perform sentiment analysis on all articles in a CSV file given a company's symbol
 
-def analyze_csv(symbol, name):
+    Args:
+        - symbol (str): Stock symbol/ticker (e.g. AAPL)
+        - name (str): Company name (e.g. Apple)
+        - limit (int, optional): Maximum number of articles to analyze
+
+    Returns:
+        tuple[list, list, list, list]: (sentiment, relevance, effective_sentiment, timestamps)
+    """
     df = pd.read_csv(f"./market_data/AlphaIntelligence/{symbol}.csv")
 
     sentiments = []
     relevances = []
     e_sentiments = []
+    timestamps = []
 
     for i, url in enumerate(df['url']):
-        # Limit amount of articles
-        # if i >= 50:
-        #     break
+        if limit > 0 and i >= limit:
+            break
 
-        # print(f"Analyzing {i + 1}: {url}", end="\r", flush=True)
+        print(f"Analyzing {i + 1} / {limit if limit > 0 else len(df)}", end="\r")
         
         (sentiment, relevance, effective_sentiment) = sentiment_analysis(url, symbol, name)
 
+        # Only append if we get valid results
         if isinstance(sentiment, float) and isinstance(relevance, float) and not np.isnan(sentiment):
             sentiments.append(sentiment)
             relevances.append(relevance)
             e_sentiments.append(effective_sentiment)
-        
-    # print()
-    # print("Overall relevance:", np.mean(relevances))
-    # print("Overall sentiment:", np.mean(sentiments))
-    # print("Effective sentiment:", np.mean(e_sentiments))
+            timestamps.append(df['time_published'][i])
 
-analyze_csv("AAPL", "Apple")
+    # Clear final "analyzing" line
+    print(" " * 25, end="\r")
+
+    return relevances, sentiments, e_sentiments, timestamps
+
+relevances, sentiments, e_sentiments, timestamps = analyze_csv("AAPL", "Apple", limit=50)
+print("relevances:", relevances)
+print("sentiments:", sentiments)
+print("e_sentiments:", e_sentiments)
+print("timestamps:", timestamps)
