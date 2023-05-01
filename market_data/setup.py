@@ -65,7 +65,7 @@ os.chdir(dname) # change location to setup file's directory
 
 # symbols that will be used when querying all data
 symbols = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'PCAR', 'TSLA', 'NVDA', 'V', 'TSM', 'UNH']
-"""
+
 #------------------TIME SERIES DATA-----------------------
 output_dir = "TimeSeries"
 for sym in symbols:
@@ -142,7 +142,7 @@ for sym in symbols:
         data = pd.concat([data, query], axis=1, join='outer')
     data.dropna(inplace=True)
     output_query(data, output_file, replace_existing=True)
-"""
+
 
 #------------------SENTIMENT ANALYSIS  DATA-----------------------
 
