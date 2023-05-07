@@ -149,6 +149,67 @@ for sym in symbols:
 #------------------SENTIMENT ANALYSIS  DATA-----------------------
 
 
+num_articles = 50 # Articles per month - AlphaVantage does not listen to this.
+num_months = 12
+starting_month = 4
+day_of_month = "01"
+
+'''
+for sym in symbols:
+    output_file = Path(output_dir) / f"{sym}.csv"
+    ts = alpha_vantage.AlphaIntelligence(key=ALPHA_VANTAGE_KEY, output_format='pandas', indexing_type='integer')
+    data, meta_data = None, None
+    print(sym)
+
+    for i in range(num_months):
+        start_year = "{}".format(2022 + (i + starting_month - 1) // 12)
+        start_month = "{:02d}".format((i + starting_month - 1) % 12 + 1)
+
+        end_year = "{}".format(2022 + (i + starting_month) // 12)
+        end_month = "{:02d}".format((i  + starting_month) % 12 + 1)
+            
+        time_from = start_year + start_month + day_of_month + "T0000"
+        time_to = end_year + end_month + day_of_month + "T0000"
+
+        print(i, "=> From:", time_from, "- To:", time_to)
+
+        query_limit()
+        #try:
+        cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from=time_from, time_to=time_to, limit=num_articles, sort="RELEVANCE")
+
+        
+        #cur_data['index'] = [ind + num_articles*i for ind in cur_data['index']]
+        cur_data.index = [ind + num_articles*i for ind in cur_data.index]
+
+        cur_data['sentiment'] = 0
+
+        for i, summary in enumerate(cur_data['summary']):
+            sent = 0
+            if isinstance(summary, str) and len(summary) > 0:
+                sent = sentiment.analyze(summary)
+            cur_data.loc[i, 'sentiment'] = sent
+        
+
+        cur_data['date'] = [str(date)[:4] + '-' + str(date)[4:6] + '-' + str(date)[6:8] for date in cur_data['time_published']]
+
+        cols_to_remove = ['index', 'url', 'time_published', 'authors', 'banner_image', 'source', 'category_within_source', 
+                          'source_domain', 'topics', 'overall_sentiment_score', 'overall_sentiment_label', 'ticker_sentiment']
+        cur_data = cur_data.drop(cols_to_remove, axis=1)
+
+        cur_data.dropna(inplace=True)
+
+        if (data is None):
+            data = cur_data
+            meta_data = cur_meta_data
+        else:
+            data = pd.concat([data, cur_data])
+        #except:
+        #    print("No articles found")
+    
+    output_query(data, output_file, replace_existing=True)
+
+'''
+
 # output_dir = "AlphaIntelligence"
 
 # start_date = datetime(2022, 3, 1, 0, 0, 0)
