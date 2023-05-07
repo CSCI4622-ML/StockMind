@@ -12,9 +12,9 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 # nltk.download('punkt')
 
 
-#symbols = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'PCAR', 'TSLA', 'NVDA', 'V', 'TSM', 'UNH']
-#names = ['Apple', 'Microsoft', 'Google', 'Google', 'Amazon', 'Paccar', 'Tesla', 'Nvidia', 'Visa', 'Taiwan Semiconductor', 'UnitedHealth']
-
+symbols = ['AAPL', 'MSFT', 'TSLA', 'META', 'XOM', 'NVDA', 'AMZN', 'JPM', 'GOOG', 'SHOP', 
+           'AMD', 'AFRM', 'BAC', 'ADBE', 'SQ', 'AVGO', 'BKNG', 'DKNG', 'TEAM', 'RDFN', 
+           'COIN', 'OPEN', 'PLUG', 'WMT', 'XOM', 'MA', 'KO', 'UNH', 'PG', 'BIO']
 
 sid = SentimentIntensityAnalyzer()
 
@@ -30,14 +30,16 @@ def sentiment_analysis(url, symbol, name):
     Returns:
         tuple[float, float, float]: (sentiment, relevance, effective_sentiment)
     """
-    res = requests.get(url)
+    # improve data reliability by acting as a user
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:20.0) Gecko/20100101 Firefox/20.0'}
+    res = requests.get(url, headers=headers)
 
     # Parse html
     html = res.text
     soup = BeautifulSoup(html, 'html.parser')
     text = soup.get_text()
     sentences = nltk.sent_tokenize(text)
-
+    
     # Match sentence structure
     body_regex = r"[A-Z0-9][^.!?]*[.!?]"
 
@@ -47,7 +49,7 @@ def sentiment_analysis(url, symbol, name):
             body_sentences.append(sentence)
 
     if len(body_sentences) == 0:
-        return None, None, None
+        return 0, 0, 0
 
     # Clean text
     body_text = " ".join(body_sentences)
@@ -61,7 +63,7 @@ def sentiment_analysis(url, symbol, name):
 
     for i, sentence in enumerate(body_sentences):
         sentence = sentence.strip("\n")
-
+        
         # Relevance
         relevant = False
         relevance = 0
@@ -88,7 +90,7 @@ def sentiment_analysis(url, symbol, name):
 
     # Check for good results
     if len(sentiment_scores) == 0:
-        return None, None, None
+        return 0, 0, 0
 
     relevance = relevant_sentences / len(body_sentences)
     relevance = np.log(relevance * 19 + 1) / np.log(10) # Apply log scaling
@@ -137,8 +139,39 @@ def analyze_csv(symbol, name, limit=0):
 
     return relevances, sentiments, e_sentiments, timestamps
 
-relevances, sentiments, e_sentiments, timestamps = analyze_csv("AAPL", "Apple", limit=50)
-print("relevances:", relevances)
-print("sentiments:", sentiments)
-print("e_sentiments:", e_sentiments)
-print("timestamps:", timestamps)
+def analyze(text):
+    """
+    Perform sentiment analysis on text
+
+    Args:
+        - text (str): Text to analyze
+
+    Returns:
+        float: sentiment
+    """
+
+    return sid.polarity_scores(text)["compound"]
+
+
+## Generate sentiment for AlphaIntelligence CSVs
+print("Analyzing sentiment...")
+
+for sym in symbols:
+    df = pd.read_csv(f'./AlphaIntelligence/{sym}.csv')
+
+    # Clean
+    df = df.dropna(subset=['summary'])
+    df = df[df['summary'] != '']
+
+    # Sentiment
+    df['sentiment'] = [analyze(summary) for summary in df['summary']]
+
+    # Convert date string to datetime and average sentiment
+    df['Unnamed: 0'] = pd.to_datetime(df['Unnamed: 0']).dt.date
+    df_avg = df.groupby('Unnamed: 0')['sentiment'].mean().reset_index()
+
+    df_avg = df_avg.rename(columns={'Unnamed: 0': ''})
+
+    df_avg.to_csv(f'./Sentiment/{sym}.csv', index=False)
+
+print("Done!")
