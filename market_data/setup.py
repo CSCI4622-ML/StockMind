@@ -8,6 +8,7 @@ from alpha_vantage_key import *
 import time
 import json
 import csv
+import sentiment
 
 # hande the data setup in parallel file structure will be as below:
 # FILE STRUCTURE
@@ -65,7 +66,7 @@ os.chdir(dname) # change location to setup file's directory
 
 # symbols that will be used when querying all data
 symbols = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'PCAR', 'TSLA', 'NVDA', 'V', 'TSM', 'UNH']
-
+'''
 #------------------TIME SERIES DATA-----------------------
 output_dir = "TimeSeries"
 for sym in symbols:
@@ -142,16 +143,16 @@ for sym in symbols:
         data = pd.concat([data, query], axis=1, join='outer')
     data.dropna(inplace=True)
     output_query(data, output_file, replace_existing=True)
-
+'''
 
 #------------------SENTIMENT ANALYSIS  DATA-----------------------
 
 output_dir = "AlphaIntelligence"
 symbols = ["AAPL"] # Limited to reduce testing time
 
-num_articles = 30
-num_months = 15
-starting_month = 2 # Feb
+num_articles = 50 # Articles per month - AlphaVantage does not listen to this.
+num_months = 12
+starting_month = 4
 day_of_month = "01"
 
 for sym in symbols:
@@ -173,18 +174,36 @@ for sym in symbols:
         print(i, "=> From:", time_from, "- To:", time_to)
 
         query_limit()
-        try:
-            cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from=time_from, time_to=time_to, limit=num_articles, sort="RELEVANCE")
+        #try:
+        cur_data, cur_meta_data = ts.get_news(symbol=sym, time_from=time_from, time_to=time_to, limit=num_articles, sort="RELEVANCE")
 
-            cur_data['index'] = [ind + num_articles*i for ind in cur_data['index']]
-            cur_data.index = [ind + num_articles*i for ind in cur_data.index]
+        
+        #cur_data['index'] = [ind + num_articles*i for ind in cur_data['index']]
+        cur_data.index = [ind + num_articles*i for ind in cur_data.index]
 
-            if (data is None):
-                data = cur_data
-                meta_data = cur_meta_data
-            else:
-                data = pd.concat([data, cur_data])
-        except:
-            print("No articles found")
+        cur_data['sentiment'] = 0
+
+        for i, summary in enumerate(cur_data['summary']):
+            sent = 0
+            if isinstance(summary, str) and len(summary) > 0:
+                sent = sentiment.analyze(summary)
+            cur_data.loc[i, 'sentiment'] = sent
+        
+
+        cur_data['date'] = [str(date)[:4] + '-' + str(date)[4:6] + '-' + str(date)[6:8] for date in cur_data['time_published']]
+
+        cols_to_remove = ['index', 'url', 'time_published', 'authors', 'banner_image', 'source', 'category_within_source', 
+                          'source_domain', 'topics', 'overall_sentiment_score', 'overall_sentiment_label', 'ticker_sentiment']
+        cur_data = cur_data.drop(cols_to_remove, axis=1)
+
+        cur_data.dropna(inplace=True)
+
+        if (data is None):
+            data = cur_data
+            meta_data = cur_meta_data
+        else:
+            data = pd.concat([data, cur_data])
+        #except:
+        #    print("No articles found")
     
     output_query(data, output_file, replace_existing=True)

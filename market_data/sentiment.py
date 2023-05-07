@@ -30,14 +30,16 @@ def sentiment_analysis(url, symbol, name):
     Returns:
         tuple[float, float, float]: (sentiment, relevance, effective_sentiment)
     """
-    res = requests.get(url)
+    # improve data reliability by acting as a user
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:20.0) Gecko/20100101 Firefox/20.0'}
+    res = requests.get(url, headers=headers)
 
     # Parse html
     html = res.text
     soup = BeautifulSoup(html, 'html.parser')
     text = soup.get_text()
     sentences = nltk.sent_tokenize(text)
-
+    
     # Match sentence structure
     body_regex = r"[A-Z0-9][^.!?]*[.!?]"
 
@@ -47,7 +49,7 @@ def sentiment_analysis(url, symbol, name):
             body_sentences.append(sentence)
 
     if len(body_sentences) == 0:
-        return None, None, None
+        return 0, 0, 0
 
     # Clean text
     body_text = " ".join(body_sentences)
@@ -61,7 +63,7 @@ def sentiment_analysis(url, symbol, name):
 
     for i, sentence in enumerate(body_sentences):
         sentence = sentence.strip("\n")
-
+        
         # Relevance
         relevant = False
         relevance = 0
@@ -88,7 +90,7 @@ def sentiment_analysis(url, symbol, name):
 
     # Check for good results
     if len(sentiment_scores) == 0:
-        return None, None, None
+        return 0, 0, 0
 
     relevance = relevant_sentences / len(body_sentences)
     relevance = np.log(relevance * 19 + 1) / np.log(10) # Apply log scaling
@@ -137,8 +139,15 @@ def analyze_csv(symbol, name, limit=0):
 
     return relevances, sentiments, e_sentiments, timestamps
 
-relevances, sentiments, e_sentiments, timestamps = analyze_csv("AAPL", "Apple", limit=50)
-print("relevances:", relevances)
-print("sentiments:", sentiments)
-print("e_sentiments:", e_sentiments)
-print("timestamps:", timestamps)
+def analyze(text):
+    """
+    Perform sentiment analysis on text
+
+    Args:
+        - url (str): Text to analyze
+
+    Returns:
+        float: sentiment
+    """
+
+    return sid.polarity_scores(text)["compound"]
