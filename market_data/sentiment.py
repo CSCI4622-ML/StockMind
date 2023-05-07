@@ -12,9 +12,9 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 # nltk.download('punkt')
 
 
-#symbols = ['AAPL', 'MSFT', 'GOOG', 'GOOGL', 'AMZN', 'PCAR', 'TSLA', 'NVDA', 'V', 'TSM', 'UNH']
-#names = ['Apple', 'Microsoft', 'Google', 'Google', 'Amazon', 'Paccar', 'Tesla', 'Nvidia', 'Visa', 'Taiwan Semiconductor', 'UnitedHealth']
-
+symbols = ['AAPL', 'MSFT', 'TSLA', 'META', 'XOM', 'NVDA', 'AMZN', 'JPM', 'GOOG', 'SHOP', 
+           'AMD', 'AFRM', 'BAC', 'ADBE', 'SQ', 'AVGO', 'BKNG', 'DKNG', 'TEAM', 'RDFN', 
+           'COIN', 'OPEN', 'PLUG', 'WMT', 'XOM', 'MA', 'KO', 'UNH', 'PG', 'BIO']
 
 sid = SentimentIntensityAnalyzer()
 
@@ -144,10 +144,34 @@ def analyze(text):
     Perform sentiment analysis on text
 
     Args:
-        - url (str): Text to analyze
+        - text (str): Text to analyze
 
     Returns:
         float: sentiment
     """
 
     return sid.polarity_scores(text)["compound"]
+
+
+## Generate sentiment for AlphaIntelligence CSVs
+print("Analyzing sentiment...")
+
+for sym in symbols:
+    df = pd.read_csv(f'./AlphaIntelligence/{sym}.csv')
+
+    # Clean
+    df = df.dropna(subset=['summary'])
+    df = df[df['summary'] != '']
+
+    # Sentiment
+    df['sentiment'] = [analyze(summary) for summary in df['summary']]
+
+    # Convert date string to datetime and average sentiment
+    df['Unnamed: 0'] = pd.to_datetime(df['Unnamed: 0']).dt.date
+    df_avg = df.groupby('Unnamed: 0')['sentiment'].mean().reset_index()
+
+    df_avg = df_avg.rename(columns={'Unnamed: 0': ''})
+
+    df_avg.to_csv(f'./Sentiment/{sym}.csv', index=False)
+
+print("Done!")
